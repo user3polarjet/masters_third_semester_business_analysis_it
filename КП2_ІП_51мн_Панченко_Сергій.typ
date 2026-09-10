@@ -134,7 +134,31 @@
     content(project(-0.18, -0.15, 0), text(size: 7pt)[Neutral])
     content(project(-0.18, -0.15, 3), text(size: 7pt)[Positive])
 
+    // Plane projection dot helper
+    let shadow(p, code, dot-color, text-color) = {
+      circle(p, radius: 0.045, fill: dot-color, stroke: none)
+      content(
+        (p.at(0) + 0.10, p.at(1) - 0.06),
+        text(size: 5pt, fill: text-color)[#code],
+      )
+    }
+
+    // Color definitions per plane
+    let floor-dot  = rgb("#3b82f6").lighten(20%) // Blue: Floor (Influence vs Support)
+    let floor-text = rgb("#1d4ed8")
+    let left-dot   = rgb("#f59e0b").lighten(20%) // Amber: Left wall (Interest vs Support)
+    let left-text  = rgb("#b45309")
+    let back-dot   = rgb("#10b981").lighten(20%) // Emerald: Back wall (Influence vs Interest)
+    let back-text  = rgb("#047857")
+
+    // Main 3D dot
     let dot(x, y, z, code, color, shift: (0.18, 0.08)) = {
+      // 1. Distinct color per plane
+      shadow(project(x, 0, z), code, floor-dot, floor-text)
+      shadow(project(0, y, z), code, left-dot, left-text)
+      shadow(project(x, y, 0), code, back-dot, back-text)
+
+      // 2. Central 3D marker and label
       let p = project(x, y, z)
       circle(p, radius: 0.08, fill: color, stroke: black)
       content(
