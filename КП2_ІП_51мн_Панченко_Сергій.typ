@@ -97,7 +97,151 @@
 #set list(indent: 1.25cm)
 #set enum(indent: 1.25cm)
 
-#let stakeholder-map() = {
+#let stakeholders = (
+  (
+    code: "S",
+    name: "Sponsor / Owner",
+    influence: 100,
+    interest: 100,
+    support: 100,
+    color: rgb("#d33f49"),
+    shift: (0.16, 0.12),
+    reason: "Власник фінансує ініціативу, визначає бізнес-цілі та очікує зростання онлайн-продажів.",
+  ),
+  (
+    code: "BA",
+    name: "Business Analyst / Product Owner",
+    influence: 93,
+    interest: 93,
+    support: 100,
+    color: rgb("#d33f49"),
+    shift: (0.16, -0.18),
+    reason: "Формує вимоги, узгоджує очікування бізнесу та команди, впливає на зміст рішення.",
+  ),
+  (
+    code: "PM",
+    name: "Project Manager",
+    influence: 90,
+    interest: 83,
+    support: 87,
+    color: rgb("#f19a38"),
+    shift: (0.14, 0.10),
+    reason: "Керує строками, ресурсами та організацією роботи команди.",
+  ),
+  (
+    code: "C",
+    name: "Customers / End Users",
+    influence: 80,
+    interest: 100,
+    support: 80,
+    color: rgb("#2780c2"),
+    shift: (0.12, -0.18),
+    reason: "Користувачі напряму визначають успішність сайту, але не приймають формальних проєктних рішень.",
+  ),
+  (
+    code: "BM",
+    name: "Branch Managers",
+    influence: 87,
+    interest: 87,
+    support: 77,
+    color: rgb("#5a9f51"),
+    shift: (0.16, 0.10),
+    reason: "Керівники піцерій відповідають за роботу точок, виконання замовлень і локальні операційні правила.",
+  ),
+  (
+    code: "KS",
+    name: "Kitchen Staff",
+    influence: 67,
+    interest: 83,
+    support: 67,
+    color: rgb("#5a9f51"),
+    shift: (0.12, -0.18),
+    reason: "Працівники кухні виконують замовлення, тому їхня робота зміниться після запуску сайту.",
+  ),
+  (
+    code: "CR",
+    name: "Couriers",
+    influence: 63,
+    interest: 80,
+    support: 57,
+    color: rgb("#5a9f51"),
+    shift: (0.14, 0.10),
+    reason: "Кур'єри залучені до доставки й оплати при отриманні, але можуть обережно ставитися до нових процесів.",
+  ),
+  (
+    code: "DEV",
+    name: "Implementation SME / Developers",
+    influence: 70,
+    interest: 67,
+    support: 80,
+    color: rgb("#7c5cc4"),
+    shift: (0.12, -0.18),
+    reason: "Розробники визначають технічну реалізацію каталогу, замовлення, інтеграцій і адмін-функцій.",
+  ),
+  (
+    code: "QA",
+    name: "Tester / QA",
+    influence: 60,
+    interest: 60,
+    support: 73,
+    color: rgb("#7c5cc4"),
+    shift: (0.14, 0.10),
+    reason: "Тестувальники перевіряють коректність замовлення, фільтрів, сторінок товарів і інтеграцій.",
+  ),
+  (
+    code: "OPS",
+    name: "Operational Support",
+    influence: 57,
+    interest: 67,
+    support: 60,
+    color: rgb("#7c5cc4"),
+    shift: (0.12, -0.18),
+    reason: "Підтримка оброблятиме інциденти, звернення користувачів і проблеми після запуску.",
+  ),
+  (
+    code: "PAY",
+    name: "Payment Provider",
+    influence: 80,
+    interest: 47,
+    support: 67,
+    color: rgb("#586f7c"),
+    shift: (0.14, 0.10),
+    reason: "Потрібний для бажаної функції оплати карткою, має технічні та юридичні вимоги до інтеграції.",
+  ),
+  (
+    code: "CRM",
+    name: "Discount Card / CRM Provider",
+    influence: 67,
+    interest: 50,
+    support: 70,
+    color: rgb("#586f7c"),
+    shift: (0.12, -0.18),
+    reason: "Впливає на можливість використання дисконтних карток і персональних знижок.",
+  ),
+  (
+    code: "REG",
+    name: "Regulator / Auditor",
+    influence: 90,
+    interest: 30,
+    support: 40,
+    color: rgb("#586f7c"),
+    shift: (0.14, 0.10),
+    reason: "Має високий вплив через вимоги до платежів, персональних даних і споживчих правил, але не зацікавлений у продукті напряму.",
+  ),
+)
+
+#let stakeholder-table-cells(data) = data.map(stakeholder => (
+  [#stakeholder.code],
+  [#stakeholder.name],
+  [#str(stakeholder.influence)],
+  [#str(stakeholder.interest)],
+  [#str(stakeholder.support)],
+  [#stakeholder.reason],
+)).flatten()
+
+#let scale-score(value) = value / 100 * 3
+
+#let stakeholder-map(data) = {
   cetz.canvas(length: 1.9cm, {
     import cetz.draw: *
 
@@ -127,12 +271,15 @@
     content(project(0, 3.55, 0), text(size: 8pt)[Interest])
     content(project(0, 0, 3.55), text(size: 8pt)[Support])
 
-    content(project(0, -0.22, 0), text(size: 7pt)[Low])
-    content(project(3, -0.22, 0), text(size: 7pt)[High])
-    content(project(-0.35, 0, 0), text(size: 7pt)[Low])
-    content(project(-0.42, 3, 0), text(size: 7pt)[High])
-    content(project(-0.18, -0.15, 0), text(size: 7pt)[Neutral])
-    content(project(-0.18, -0.15, 3), text(size: 7pt)[Positive])
+    content(project(0, -0.22, 0), text(size: 7pt)[0])
+    content(project(1.5, -0.22, 0), text(size: 7pt)[50])
+    content(project(3, -0.22, 0), text(size: 7pt)[100])
+    content(project(-0.35, 0, 0), text(size: 7pt)[0])
+    content(project(-0.38, 1.5, 0), text(size: 7pt)[50])
+    content(project(-0.42, 3, 0), text(size: 7pt)[100])
+    content(project(-0.18, -0.15, 0), text(size: 7pt)[0])
+    content(project(-0.18, -0.15, 1.5), text(size: 7pt)[50])
+    content(project(-0.18, -0.15, 3), text(size: 7pt)[100])
 
     // Plane projection dot helper
     let shadow(p, code, dot-color, text-color) = {
@@ -152,7 +299,13 @@
     let back-text  = rgb("#047857")
 
     // Main 3D dot
-    let dot(x, y, z, code, color, shift: (0.18, 0.08)) = {
+    let dot(stakeholder) = {
+      let x = scale-score(stakeholder.influence)
+      let y = scale-score(stakeholder.interest)
+      let z = scale-score(stakeholder.support)
+      let code = stakeholder.code
+      let shift = stakeholder.shift
+
       // 1. Distinct color per plane
       shadow(project(x, 0, z), code, floor-dot, floor-text)
       shadow(project(0, y, z), code, left-dot, left-text)
@@ -160,26 +313,54 @@
 
       // 2. Central 3D marker and label
       let p = project(x, y, z)
-      circle(p, radius: 0.08, fill: color, stroke: black)
+      circle(p, radius: 0.08, fill: stakeholder.color, stroke: black)
       content(
         (p.at(0) + shift.at(0), p.at(1) + shift.at(1)),
         box(fill: white, inset: 1pt, stroke: rgb("#d8dee4"), radius: 1pt)[#text(size: 7pt)[#code]],
       )
     }
 
-    dot(3.0, 3.0, 3.0, [S], rgb("#d33f49"), shift: (0.16, 0.12))
-    dot(2.8, 2.8, 3.0, [BA], rgb("#d33f49"), shift: (0.16, -0.18))
-    dot(2.7, 2.5, 2.6, [PM], rgb("#f19a38"), shift: (0.14, 0.10))
-    dot(2.4, 3.0, 2.4, [C], rgb("#2780c2"), shift: (0.12, -0.18))
-    dot(2.6, 2.6, 2.3, [BM], rgb("#5a9f51"), shift: (0.16, 0.10))
-    dot(2.0, 2.5, 2.0, [KS], rgb("#5a9f51"), shift: (0.12, -0.18))
-    dot(1.9, 2.4, 1.7, [CR], rgb("#5a9f51"), shift: (0.14, 0.10))
-    dot(2.1, 2.0, 2.4, [DEV], rgb("#7c5cc4"), shift: (0.12, -0.18))
-    dot(1.8, 1.8, 2.2, [QA], rgb("#7c5cc4"), shift: (0.14, 0.10))
-    dot(1.7, 2.0, 1.8, [OPS], rgb("#7c5cc4"), shift: (0.12, -0.18))
-    dot(2.4, 1.4, 2.0, [PAY], rgb("#586f7c"), shift: (0.14, 0.10))
-    dot(2.0, 1.5, 2.1, [CRM], rgb("#586f7c"), shift: (0.12, -0.18))
-    dot(2.7, 0.9, 1.2, [REG], rgb("#586f7c"), shift: (0.14, 0.10))
+    for stakeholder in data {
+      dot(stakeholder)
+    }
+  })
+}
+
+#let stakeholder-projection(data, x-key, y-key, x-label, y-label) = {
+  cetz.canvas(length: 3cm, {
+    import cetz.draw: *
+
+    let axis-stroke = (paint: rgb("#2f3a45"), thickness: 0.8pt)
+    let grid-stroke = (paint: rgb("#d7dee6"), thickness: 0.35pt)
+
+    for i in range(0, 4) {
+      line((i, 0), (i, 3), stroke: grid-stroke)
+      line((0, i), (3, i), stroke: grid-stroke)
+    }
+
+    line((0, 0), (3.25, 0), stroke: axis-stroke)
+    line((0, 0), (0, 3.25), stroke: axis-stroke)
+
+    content((1.5, -0.38), text(size: 7pt)[#x-label])
+    content((-0.42, 1.5), text(size: 7pt)[#y-label], angle: 90deg)
+    content((0, -0.18), text(size: 6pt)[0])
+    content((1.5, -0.18), text(size: 6pt)[50])
+    content((3, -0.18), text(size: 6pt)[100])
+    content((-0.25, 0), text(size: 6pt)[0])
+    content((-0.27, 1.5), text(size: 6pt)[50])
+    content((-0.28, 3), text(size: 6pt)[100])
+
+    for stakeholder in data {
+      let x = scale-score(stakeholder.at(x-key))
+      let y = scale-score(stakeholder.at(y-key))
+      circle((x, y), radius: 0.065, fill: stakeholder.color, stroke: black)
+      content(
+        (x + 0.08, y + 0.08),
+        box(fill: white, inset: 0.8pt, stroke: rgb("#d8dee4"), radius: 1pt)[
+          #text(size: 5.5pt)[#stakeholder.code]
+        ],
+      )
+    }
   })
 }
 
@@ -218,13 +399,32 @@
 + Interest - рівень зацікавленості в результатах проєкту.
 + Support - очікуване ставлення до змін: від нейтрального або обережного до позитивного.
 
-Шкала оцінювання: від 0 до 3, де 0 означає низький рівень, а 3 - високий рівень.
+Шкала оцінювання: від 0 до 100, де 0 означає найнижчий рівень, 50 - середній рівень, а 100 - найвищий рівень. Для побудови графіків ці значення автоматично нормалізуються до координат полотна без зміни відносного положення точок.
 
 == Об'ємна карта зацікавлених сторін
 
 #figure(
-  stakeholder-map(),
+  stakeholder-map(stakeholders),
   caption: [Об'ємна stakeholder map для проєкту вебсайту онлайн-замовлення піци]
+)
+
+== Двовимірні проєкції карти
+
+Для уточнення положення точок на об'ємній карті побудовано три двовимірні проєкції: на площину XY, на площину YZ та на площину XZ.
+
+#figure(
+  stakeholder-projection(stakeholders, "influence", "interest", [Influence], [Interest]),
+  caption: [Проєкція stakeholder map на площину XY: Influence / Interest]
+)
+
+#figure(
+  stakeholder-projection(stakeholders, "interest", "support", [Interest], [Support]),
+  caption: [Проєкція stakeholder map на площину YZ: Interest / Support]
+)
+
+#figure(
+  stakeholder-projection(stakeholders, "influence", "support", [Influence], [Support]),
+  caption: [Проєкція stakeholder map на площину XZ: Influence / Support]
 )
 
 == Реєстр зацікавлених сторін
@@ -242,19 +442,7 @@
       [*Sup.*],
       [*Обґрунтування*],
     ),
-    [S], [Sponsor / Owner], [3.0], [3.0], [3.0], [Власник фінансує ініціативу, визначає бізнес-цілі та очікує зростання онлайн-продажів.],
-    [BA], [Business Analyst / Product Owner], [2.8], [2.8], [3.0], [Формує вимоги, узгоджує очікування бізнесу та команди, впливає на зміст рішення.],
-    [PM], [Project Manager], [2.7], [2.5], [2.6], [Керує строками, ресурсами та організацією роботи команди.],
-    [C], [Customers / End Users], [2.4], [3.0], [2.4], [Користувачі напряму визначають успішність сайту, але не приймають формальних проєктних рішень.],
-    [BM], [Branch Managers], [2.6], [2.6], [2.3], [Керівники піцерій відповідають за роботу точок, виконання замовлень і локальні операційні правила.],
-    [KS], [Kitchen Staff], [2.0], [2.5], [2.0], [Працівники кухні виконують замовлення, тому їхня робота зміниться після запуску сайту.],
-    [CR], [Couriers], [1.9], [2.4], [1.7], [Кур'єри залучені до доставки й оплати при отриманні, але можуть обережно ставитися до нових процесів.],
-    [DEV], [Implementation SME / Developers], [2.1], [2.0], [2.4], [Розробники визначають технічну реалізацію каталогу, замовлення, інтеграцій і адмін-функцій.],
-    [QA], [Tester / QA], [1.8], [1.8], [2.2], [Тестувальники перевіряють коректність замовлення, фільтрів, сторінок товарів і інтеграцій.],
-    [OPS], [Operational Support], [1.7], [2.0], [1.8], [Підтримка оброблятиме інциденти, звернення користувачів і проблеми після запуску.],
-    [PAY], [Payment Provider], [2.4], [1.4], [2.0], [Потрібний для бажаної функції оплати карткою, має технічні та юридичні вимоги до інтеграції.],
-    [CRM], [Discount Card / CRM Provider], [2.0], [1.5], [2.1], [Впливає на можливість використання дисконтних карток і персональних знижок.],
-    [REG], [Regulator / Auditor], [2.7], [0.9], [1.2], [Має високий вплив через вимоги до платежів, персональних даних і споживчих правил, але не зацікавлений у продукті напряму.],
+    ..stakeholder-table-cells(stakeholders),
   )
 ]
 
