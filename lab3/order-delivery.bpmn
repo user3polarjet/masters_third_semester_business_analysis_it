@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_OrderDelivery" targetNamespace="http://example.com/lab3/order-delivery">
+  <bpmn:process id="Process_OrderDelivery" name="Контроль доставки замовлення" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_OrderDelivery">
+      <bpmn:lane id="Lane_Manager" name="Менеджер">
+        <bpmn:flowNodeRef>StartEvent_OrderNeeded</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CreateOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SendOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_WaitForDelivery</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>IntermediateEvent_DeadlineExpired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ContactTransportCompany</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_TransportResponse</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_StopWaiting</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_WarehouseWorker" name="Комірник">
+        <bpmn:flowNodeRef>IntermediateEvent_DeliveryReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CheckGoods</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_GoodsMatchOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AcceptDelivery</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NotifyManager</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_DeliveryAccepted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RejectDelivery</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_DeliveryRejected</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_OrderNeeded" name="Потрібно створити замовлення">
+      <bpmn:outgoing>Flow_Start_CreateOrder</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_CreateOrder" name="Створити замовлення">
+      <bpmn:incoming>Flow_Start_CreateOrder</bpmn:incoming>
+      <bpmn:outgoing>Flow_CreateOrder_SendOrder</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sendTask id="Task_SendOrder" name="Надіслати замовлення підряднику">
+      <bpmn:incoming>Flow_CreateOrder_SendOrder</bpmn:incoming>
+      <bpmn:outgoing>Flow_SendOrder_WaitForDelivery</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:eventBasedGateway id="Gateway_WaitForDelivery" name="Очікувати доставку або строк">
+      <bpmn:incoming>Flow_SendOrder_WaitForDelivery</bpmn:incoming>
+      <bpmn:incoming>Flow_WaitAgain_WaitForDelivery</bpmn:incoming>
+      <bpmn:outgoing>Flow_WaitForDelivery_DeliveryReceived</bpmn:outgoing>
+      <bpmn:outgoing>Flow_WaitForDelivery_DeadlineExpired</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+
+    <bpmn:intermediateCatchEvent id="IntermediateEvent_DeliveryReceived" name="Замовлення доставлено">
+      <bpmn:incoming>Flow_WaitForDelivery_DeliveryReceived</bpmn:incoming>
+      <bpmn:outgoing>Flow_DeliveryReceived_CheckGoods</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_DeliveryReceived" />
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:intermediateCatchEvent id="IntermediateEvent_DeadlineExpired" name="Строк доставки минув">
+      <bpmn:incoming>Flow_WaitForDelivery_DeadlineExpired</bpmn:incoming>
+      <bpmn:outgoing>Flow_DeadlineExpired_ContactTransport</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_DeadlineExpired" />
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:userTask id="Task_ContactTransportCompany" name="Зв'язатися з транспортною компанією">
+      <bpmn:incoming>Flow_DeadlineExpired_ContactTransport</bpmn:incoming>
+      <bpmn:outgoing>Flow_ContactTransport_TransportResponse</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_TransportResponse" name="Рішення після відповіді компанії">
+      <bpmn:incoming>Flow_ContactTransport_TransportResponse</bpmn:incoming>
+      <bpmn:outgoing>Flow_WaitAgain_WaitForDelivery</bpmn:outgoing>
+      <bpmn:outgoing>Flow_StopWaiting</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:endEvent id="EndEvent_StopWaiting" name="Припинити очікування">
+      <bpmn:incoming>Flow_StopWaiting</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:userTask id="Task_CheckGoods" name="Перевірити доставлені товари">
+      <bpmn:incoming>Flow_DeliveryReceived_CheckGoods</bpmn:incoming>
+      <bpmn:outgoing>Flow_CheckGoods_GoodsMatch</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_GoodsMatchOrder" name="Товари відповідають замовленню?">
+      <bpmn:incoming>Flow_CheckGoods_GoodsMatch</bpmn:incoming>
+      <bpmn:outgoing>Flow_GoodsMatch_AcceptDelivery</bpmn:outgoing>
+      <bpmn:outgoing>Flow_GoodsDoNotMatch_RejectDelivery</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_AcceptDelivery" name="Прийняти доставку">
+      <bpmn:incoming>Flow_GoodsMatch_AcceptDelivery</bpmn:incoming>
+      <bpmn:outgoing>Flow_AcceptDelivery_NotifyManager</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sendTask id="Task_NotifyManager" name="Повідомити менеджера">
+      <bpmn:incoming>Flow_AcceptDelivery_NotifyManager</bpmn:incoming>
+      <bpmn:outgoing>Flow_NotifyManager_AcceptedEnd</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="EndEvent_DeliveryAccepted" name="Доставку прийнято">
+      <bpmn:incoming>Flow_NotifyManager_AcceptedEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:userTask id="Task_RejectDelivery" name="Не приймати доставку">
+      <bpmn:incoming>Flow_GoodsDoNotMatch_RejectDelivery</bpmn:incoming>
+      <bpmn:outgoing>Flow_RejectDelivery_RejectedEnd</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="EndEvent_DeliveryRejected" name="Доставку відхилено">
+      <bpmn:incoming>Flow_RejectDelivery_RejectedEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_Start_CreateOrder" sourceRef="StartEvent_OrderNeeded" targetRef="Task_CreateOrder" />
+    <bpmn:sequenceFlow id="Flow_CreateOrder_SendOrder" sourceRef="Task_CreateOrder" targetRef="Task_SendOrder" />
+    <bpmn:sequenceFlow id="Flow_SendOrder_WaitForDelivery" sourceRef="Task_SendOrder" targetRef="Gateway_WaitForDelivery" />
+    <bpmn:sequenceFlow id="Flow_WaitForDelivery_DeliveryReceived" name="Доставлено" sourceRef="Gateway_WaitForDelivery" targetRef="IntermediateEvent_DeliveryReceived" />
+    <bpmn:sequenceFlow id="Flow_WaitForDelivery_DeadlineExpired" name="Строк минув" sourceRef="Gateway_WaitForDelivery" targetRef="IntermediateEvent_DeadlineExpired" />
+    <bpmn:sequenceFlow id="Flow_DeadlineExpired_ContactTransport" sourceRef="IntermediateEvent_DeadlineExpired" targetRef="Task_ContactTransportCompany" />
+    <bpmn:sequenceFlow id="Flow_ContactTransport_TransportResponse" sourceRef="Task_ContactTransportCompany" targetRef="Gateway_TransportResponse" />
+    <bpmn:sequenceFlow id="Flow_WaitAgain_WaitForDelivery" name="Чекати доставку" sourceRef="Gateway_TransportResponse" targetRef="Gateway_WaitForDelivery" />
+    <bpmn:sequenceFlow id="Flow_StopWaiting" name="Припинити очікування" sourceRef="Gateway_TransportResponse" targetRef="EndEvent_StopWaiting" />
+    <bpmn:sequenceFlow id="Flow_DeliveryReceived_CheckGoods" sourceRef="IntermediateEvent_DeliveryReceived" targetRef="Task_CheckGoods" />
+    <bpmn:sequenceFlow id="Flow_CheckGoods_GoodsMatch" sourceRef="Task_CheckGoods" targetRef="Gateway_GoodsMatchOrder" />
+    <bpmn:sequenceFlow id="Flow_GoodsMatch_AcceptDelivery" name="Так" sourceRef="Gateway_GoodsMatchOrder" targetRef="Task_AcceptDelivery" />
+    <bpmn:sequenceFlow id="Flow_AcceptDelivery_NotifyManager" sourceRef="Task_AcceptDelivery" targetRef="Task_NotifyManager" />
+    <bpmn:sequenceFlow id="Flow_NotifyManager_AcceptedEnd" sourceRef="Task_NotifyManager" targetRef="EndEvent_DeliveryAccepted" />
+    <bpmn:sequenceFlow id="Flow_GoodsDoNotMatch_RejectDelivery" name="Ні" sourceRef="Gateway_GoodsMatchOrder" targetRef="Task_RejectDelivery" />
+    <bpmn:sequenceFlow id="Flow_RejectDelivery_RejectedEnd" sourceRef="Task_RejectDelivery" targetRef="EndEvent_DeliveryRejected" />
+  </bpmn:process>
+</bpmn:definitions>

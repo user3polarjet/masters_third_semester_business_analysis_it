@@ -1,0 +1,19 @@
+{
+  "name": "lab3-bpmn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local BPMN tooling for laboratory work 3.",
+  "scripts": {
+    "layout": "node scripts/layout-bpmn.mjs",
+    "render": "bpmn-to-image",
+    "render:svg": "npm run render --",
+    "render:layouted": "npm run layout --"
+  },
+  "devDependencies": {
+    "bpmn-auto-layout": "latest",
+    "bpmn-to-image": "latest"
+  },
+  "allowScripts": {
+    "puppeteer@24.43.1": true
+  }
+}

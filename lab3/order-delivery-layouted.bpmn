@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_OrderDelivery" targetNamespace="http://example.com/lab3/order-delivery">
+  <bpmn:process id="Process_OrderDelivery" name="Контроль доставки замовлення" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_OrderDelivery">
+      <bpmn:lane id="Lane_Manager" name="Менеджер">
+        <bpmn:flowNodeRef>StartEvent_OrderNeeded</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CreateOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SendOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_WaitForDelivery</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>IntermediateEvent_DeadlineExpired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ContactTransportCompany</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_TransportResponse</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_StopWaiting</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_WarehouseWorker" name="Комірник">
+        <bpmn:flowNodeRef>IntermediateEvent_DeliveryReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CheckGoods</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_GoodsMatchOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AcceptDelivery</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NotifyManager</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_DeliveryAccepted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RejectDelivery</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_DeliveryRejected</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_OrderNeeded" name="Потрібно створити замовлення">
+      <bpmn:outgoing>Flow_Start_CreateOrder</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_CreateOrder" name="Створити замовлення">
+      <bpmn:incoming>Flow_Start_CreateOrder</bpmn:incoming>
+      <bpmn:outgoing>Flow_CreateOrder_SendOrder</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sendTask id="Task_SendOrder" name="Надіслати замовлення підряднику">
+      <bpmn:incoming>Flow_CreateOrder_SendOrder</bpmn:incoming>
+      <bpmn:outgoing>Flow_SendOrder_WaitForDelivery</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:eventBasedGateway id="Gateway_WaitForDelivery" name="Очікувати доставку або строк">
+      <bpmn:incoming>Flow_SendOrder_WaitForDelivery</bpmn:incoming>
+      <bpmn:incoming>Flow_WaitAgain_WaitForDelivery</bpmn:incoming>
+      <bpmn:outgoing>Flow_WaitForDelivery_DeliveryReceived</bpmn:outgoing>
+      <bpmn:outgoing>Flow_WaitForDelivery_DeadlineExpired</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="IntermediateEvent_DeliveryReceived" name="Замовлення доставлено">
+      <bpmn:incoming>Flow_WaitForDelivery_DeliveryReceived</bpmn:incoming>
+      <bpmn:outgoing>Flow_DeliveryReceived_CheckGoods</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_DeliveryReceived" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="IntermediateEvent_DeadlineExpired" name="Строк доставки минув">
+      <bpmn:incoming>Flow_WaitForDelivery_DeadlineExpired</bpmn:incoming>
+      <bpmn:outgoing>Flow_DeadlineExpired_ContactTransport</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_DeadlineExpired" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="Task_ContactTransportCompany" name="Зв&#39;язатися з транспортною компанією">
+      <bpmn:incoming>Flow_DeadlineExpired_ContactTransport</bpmn:incoming>
+      <bpmn:outgoing>Flow_ContactTransport_TransportResponse</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_TransportResponse" name="Рішення після відповіді компанії">
+      <bpmn:incoming>Flow_ContactTransport_TransportResponse</bpmn:incoming>
+      <bpmn:outgoing>Flow_WaitAgain_WaitForDelivery</bpmn:outgoing>
+      <bpmn:outgoing>Flow_StopWaiting</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndEvent_StopWaiting" name="Припинити очікування">
+      <bpmn:incoming>Flow_StopWaiting</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Task_CheckGoods" name="Перевірити доставлені товари">
+      <bpmn:incoming>Flow_DeliveryReceived_CheckGoods</bpmn:incoming>
+      <bpmn:outgoing>Flow_CheckGoods_GoodsMatch</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_GoodsMatchOrder" name="Товари відповідають замовленню?">
+      <bpmn:incoming>Flow_CheckGoods_GoodsMatch</bpmn:incoming>
+      <bpmn:outgoing>Flow_GoodsMatch_AcceptDelivery</bpmn:outgoing>
+      <bpmn:outgoing>Flow_GoodsDoNotMatch_RejectDelivery</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_AcceptDelivery" name="Прийняти доставку">
+      <bpmn:incoming>Flow_GoodsMatch_AcceptDelivery</bpmn:incoming>
+      <bpmn:outgoing>Flow_AcceptDelivery_NotifyManager</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sendTask id="Task_NotifyManager" name="Повідомити менеджера">
+      <bpmn:incoming>Flow_AcceptDelivery_NotifyManager</bpmn:incoming>
+      <bpmn:outgoing>Flow_NotifyManager_AcceptedEnd</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndEvent_DeliveryAccepted" name="Доставку прийнято">
+      <bpmn:incoming>Flow_NotifyManager_AcceptedEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Task_RejectDelivery" name="Не приймати доставку">
+      <bpmn:incoming>Flow_GoodsDoNotMatch_RejectDelivery</bpmn:incoming>
+      <bpmn:outgoing>Flow_RejectDelivery_RejectedEnd</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_DeliveryRejected" name="Доставку відхилено">
+      <bpmn:incoming>Flow_RejectDelivery_RejectedEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_CreateOrder" sourceRef="StartEvent_OrderNeeded" targetRef="Task_CreateOrder" />
+    <bpmn:sequenceFlow id="Flow_CreateOrder_SendOrder" sourceRef="Task_CreateOrder" targetRef="Task_SendOrder" />
+    <bpmn:sequenceFlow id="Flow_SendOrder_WaitForDelivery" sourceRef="Task_SendOrder" targetRef="Gateway_WaitForDelivery" />
+    <bpmn:sequenceFlow id="Flow_WaitForDelivery_DeliveryReceived" name="Доставлено" sourceRef="Gateway_WaitForDelivery" targetRef="IntermediateEvent_DeliveryReceived" />
+    <bpmn:sequenceFlow id="Flow_WaitForDelivery_DeadlineExpired" name="Строк минув" sourceRef="Gateway_WaitForDelivery" targetRef="IntermediateEvent_DeadlineExpired" />
+    <bpmn:sequenceFlow id="Flow_DeadlineExpired_ContactTransport" sourceRef="IntermediateEvent_DeadlineExpired" targetRef="Task_ContactTransportCompany" />
+    <bpmn:sequenceFlow id="Flow_ContactTransport_TransportResponse" sourceRef="Task_ContactTransportCompany" targetRef="Gateway_TransportResponse" />
+    <bpmn:sequenceFlow id="Flow_WaitAgain_WaitForDelivery" name="Чекати доставку" sourceRef="Gateway_TransportResponse" targetRef="Gateway_WaitForDelivery" />
+    <bpmn:sequenceFlow id="Flow_StopWaiting" name="Припинити очікування" sourceRef="Gateway_TransportResponse" targetRef="EndEvent_StopWaiting" />
+    <bpmn:sequenceFlow id="Flow_DeliveryReceived_CheckGoods" sourceRef="IntermediateEvent_DeliveryReceived" targetRef="Task_CheckGoods" />
+    <bpmn:sequenceFlow id="Flow_CheckGoods_GoodsMatch" sourceRef="Task_CheckGoods" targetRef="Gateway_GoodsMatchOrder" />
+    <bpmn:sequenceFlow id="Flow_GoodsMatch_AcceptDelivery" name="Так" sourceRef="Gateway_GoodsMatchOrder" targetRef="Task_AcceptDelivery" />
+    <bpmn:sequenceFlow id="Flow_AcceptDelivery_NotifyManager" sourceRef="Task_AcceptDelivery" targetRef="Task_NotifyManager" />
+    <bpmn:sequenceFlow id="Flow_NotifyManager_AcceptedEnd" sourceRef="Task_NotifyManager" targetRef="EndEvent_DeliveryAccepted" />
+    <bpmn:sequenceFlow id="Flow_GoodsDoNotMatch_RejectDelivery" name="Ні" sourceRef="Gateway_GoodsMatchOrder" targetRef="Task_RejectDelivery" />
+    <bpmn:sequenceFlow id="Flow_RejectDelivery_RejectedEnd" sourceRef="Task_RejectDelivery" targetRef="EndEvent_DeliveryRejected" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Process_OrderDelivery">
+    <bpmndi:BPMNPlane id="BPMNPlane_Process_OrderDelivery" bpmnElement="Process_OrderDelivery">
+      <bpmndi:BPMNShape id="StartEvent_OrderNeeded_di" bpmnElement="StartEvent_OrderNeeded">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CreateOrder_di" bpmnElement="Task_CreateOrder">
+        <dc:Bounds x="175" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SendOrder_di" bpmnElement="Task_SendOrder">
+        <dc:Bounds x="325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_WaitForDelivery_di" bpmnElement="Gateway_WaitForDelivery">
+        <dc:Bounds x="500" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateEvent_DeliveryReceived_di" bpmnElement="IntermediateEvent_DeliveryReceived">
+        <dc:Bounds x="657" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CheckGoods_di" bpmnElement="Task_CheckGoods">
+        <dc:Bounds x="775" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_GoodsMatchOrder_di" bpmnElement="Gateway_GoodsMatchOrder" isMarkerVisible="true">
+        <dc:Bounds x="950" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AcceptDelivery_di" bpmnElement="Task_AcceptDelivery">
+        <dc:Bounds x="1075" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_NotifyManager_di" bpmnElement="Task_NotifyManager">
+        <dc:Bounds x="1225" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_DeliveryAccepted_di" bpmnElement="EndEvent_DeliveryAccepted">
+        <dc:Bounds x="1407" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateEvent_DeadlineExpired_di" bpmnElement="IntermediateEvent_DeadlineExpired">
+        <dc:Bounds x="657" y="192" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ContactTransportCompany_di" bpmnElement="Task_ContactTransportCompany">
+        <dc:Bounds x="775" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_TransportResponse_di" bpmnElement="Gateway_TransportResponse" isMarkerVisible="true">
+        <dc:Bounds x="950" y="185" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_StopWaiting_di" bpmnElement="EndEvent_StopWaiting">
+        <dc:Bounds x="1107" y="192" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RejectDelivery_di" bpmnElement="Task_RejectDelivery">
+        <dc:Bounds x="1525" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_DeliveryRejected_di" bpmnElement="EndEvent_DeliveryRejected">
+        <dc:Bounds x="1707" y="192" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_CreateOrder_di" bpmnElement="Flow_Start_CreateOrder">
+        <di:waypoint x="93" y="70" />
+        <di:waypoint x="175" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CreateOrder_SendOrder_di" bpmnElement="Flow_CreateOrder_SendOrder">
+        <di:waypoint x="275" y="70" />
+        <di:waypoint x="325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SendOrder_WaitForDelivery_di" bpmnElement="Flow_SendOrder_WaitForDelivery">
+        <di:waypoint x="425" y="70" />
+        <di:waypoint x="500" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_WaitForDelivery_DeliveryReceived_di" bpmnElement="Flow_WaitForDelivery_DeliveryReceived">
+        <di:waypoint x="550" y="70" />
+        <di:waypoint x="657" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_WaitForDelivery_DeadlineExpired_di" bpmnElement="Flow_WaitForDelivery_DeadlineExpired">
+        <di:waypoint x="525" y="95" />
+        <di:waypoint x="525" y="210" />
+        <di:waypoint x="657" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DeliveryReceived_CheckGoods_di" bpmnElement="Flow_DeliveryReceived_CheckGoods">
+        <di:waypoint x="693" y="70" />
+        <di:waypoint x="775" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CheckGoods_GoodsMatch_di" bpmnElement="Flow_CheckGoods_GoodsMatch">
+        <di:waypoint x="875" y="70" />
+        <di:waypoint x="950" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_GoodsMatch_AcceptDelivery_di" bpmnElement="Flow_GoodsMatch_AcceptDelivery">
+        <di:waypoint x="1000" y="70" />
+        <di:waypoint x="1075" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_GoodsDoNotMatch_RejectDelivery_di" bpmnElement="Flow_GoodsDoNotMatch_RejectDelivery">
+        <di:waypoint x="1000" y="70" />
+        <di:waypoint x="1050" y="70" />
+        <di:waypoint x="1050" y="140" />
+        <di:waypoint x="1500" y="140" />
+        <di:waypoint x="1500" y="210" />
+        <di:waypoint x="1525" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AcceptDelivery_NotifyManager_di" bpmnElement="Flow_AcceptDelivery_NotifyManager">
+        <di:waypoint x="1175" y="70" />
+        <di:waypoint x="1225" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_NotifyManager_AcceptedEnd_di" bpmnElement="Flow_NotifyManager_AcceptedEnd">
+        <di:waypoint x="1325" y="70" />
+        <di:waypoint x="1407" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DeadlineExpired_ContactTransport_di" bpmnElement="Flow_DeadlineExpired_ContactTransport">
+        <di:waypoint x="693" y="210" />
+        <di:waypoint x="775" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ContactTransport_TransportResponse_di" bpmnElement="Flow_ContactTransport_TransportResponse">
+        <di:waypoint x="875" y="210" />
+        <di:waypoint x="950" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_WaitAgain_WaitForDelivery_di" bpmnElement="Flow_WaitAgain_WaitForDelivery">
+        <di:waypoint x="975" y="235" />
+        <di:waypoint x="975" y="280" />
+        <di:waypoint x="525" y="280" />
+        <di:waypoint x="525" y="95" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_StopWaiting_di" bpmnElement="Flow_StopWaiting">
+        <di:waypoint x="1000" y="210" />
+        <di:waypoint x="1107" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RejectDelivery_RejectedEnd_di" bpmnElement="Flow_RejectDelivery_RejectedEnd">
+        <di:waypoint x="1625" y="210" />
+        <di:waypoint x="1707" y="210" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
