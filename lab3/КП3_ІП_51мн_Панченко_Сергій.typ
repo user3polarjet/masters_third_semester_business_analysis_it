@@ -61,6 +61,8 @@
 #set heading(numbering: (..nums) => nums.pos().map(str).join("."))
 #show heading: it => {
   if it.level == 1 {
+    counter(figure.where(kind: table)).update(0)
+    counter(figure.where(kind: image)).update(0)
     set align(center)
     set text(weight: "regular", size: 18pt)
     pagebreak()
@@ -71,7 +73,19 @@
   }
 }
 
-#show figure: it => {
+#let figure-numbering(num) = context {
+  let h-num = counter(heading).at(here()).at(0)
+  str(h-num) + "." + str(num)
+}
+
+#show figure.where(kind: table): it => {
+  align(left)[
+    #it.supplement #context (it.counter.display(it.numbering)) #it.caption.body
+  ]
+  v(10pt, weak: true)
+  align(center)[#it.body]
+}
+#show figure.where(kind: image): it => {
   set align(center)
   it.body
   v(8pt, weak: true)
@@ -81,15 +95,10 @@
   [ — ]
   it.caption.body
 }
-#set figure(
-  supplement: [Рисунок],
-  numbering: (num) => {
-    context {
-      let h-num = counter(heading).at(here()).at(0)
-      str(h-num) + "." + str(num)
-    }
-  }
-)
+
+#set figure(numbering: figure-numbering)
+#show figure.where(kind: image): set figure(supplement: [Рисунок])
+#show figure.where(kind: table): set figure(supplement: [Таблиця])
 
 #set table(
   stroke: 0.5pt,

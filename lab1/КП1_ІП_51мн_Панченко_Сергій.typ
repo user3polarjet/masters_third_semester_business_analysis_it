@@ -61,6 +61,8 @@
 #set heading(numbering: (..nums) => nums.pos().map(str).join("."))
 #show heading: it => {
   if it.level == 1 {
+    counter(figure.where(kind: table)).update(0)
+    counter(figure.where(kind: image)).update(0)
     set align(center)
     set text(weight: "regular", size: 18pt)
     pagebreak()
@@ -70,6 +72,33 @@
     it
   }
 }
+
+#let figure-numbering(num) = context {
+  let h-num = counter(heading).at(here()).at(0)
+  str(h-num) + "." + str(num)
+}
+
+#show figure.where(kind: table): it => {
+  align(left)[
+    #it.supplement #context (it.counter.display(it.numbering)) #it.caption.body
+  ]
+  v(10pt, weak: true)
+  align(center)[#it.body]
+}
+#show figure.where(kind: image): it => {
+  set align(center)
+  it.body
+  v(8pt, weak: true)
+  it.supplement
+  [ ]
+  context (it.counter.display(it.numbering))
+  [ — ]
+  it.caption.body
+}
+
+#set figure(numbering: figure-numbering)
+#show figure.where(kind: image): set figure(supplement: [Рисунок])
+#show figure.where(kind: table): set figure(supplement: [Таблиця])
 
 #set par(first-line-indent: (amount: 1.25cm, all: true), justify: true, leading: 1em, spacing: 1em)
 #set list(indent: 1.25cm)
@@ -104,59 +133,65 @@ RACI матриця використовується для опису відп�
 
 == Класи зацікавлених осіб
 
-#table(
-  columns: (32%, 68%),
-  table.header(
-    [*Generic Stakeholder*],
-    [*Examples and Alternate Roles*],
+#figure(
+  table(
+    columns: (32%, 68%),
+    table.header(
+      [*Generic Stakeholder*],
+      [*Examples and Alternate Roles*],
+    ),
+    [Business Analyst], [Business Systems Analyst, Systems Analyst, Process Analyst, Consultant, Product Owner, etc.],
+    [Customer], [Segmented by market, geography, industry, etc.],
+    [Domain SME], [Broken out by organizational unit, job role, etc.],
+    [End User], [Broken out by organizational unit, job role, etc.],
+    [Implementation SME], [Project Librarian, Change Manager, Configuration Manager, Solution Architect, Developer, DBA, Information Architect, Usability Analyst, Trainer, Organizational Change Consultant, etc.],
+    [Operational Support], [Help Desk, Network Technicians, Release Manager],
+    [Project Manager], [Scrum Master, Team Leader],
+    [Supplier], [Providers, Consultants, etc.],
+    [Tester], [Quality Assurance Analyst],
+    [Regulator], [Government, Regulatory Bodies, Auditors],
+    [Sponsor], [Managers, Executives, Product Managers, Process Owners],
   ),
-  [Business Analyst], [Business Systems Analyst, Systems Analyst, Process Analyst, Consultant, Product Owner, etc.],
-  [Customer], [Segmented by market, geography, industry, etc.],
-  [Domain SME], [Broken out by organizational unit, job role, etc.],
-  [End User], [Broken out by organizational unit, job role, etc.],
-  [Implementation SME], [Project Librarian, Change Manager, Configuration Manager, Solution Architect, Developer, DBA, Information Architect, Usability Analyst, Trainer, Organizational Change Consultant, etc.],
-  [Operational Support], [Help Desk, Network Technicians, Release Manager],
-  [Project Manager], [Scrum Master, Team Leader],
-  [Supplier], [Providers, Consultants, etc.],
-  [Tester], [Quality Assurance Analyst],
-  [Regulator], [Government, Regulatory Bodies, Auditors],
-  [Sponsor], [Managers, Executives, Product Managers, Process Owners],
+  caption: [Класи зацікавлених осіб]
 )
 
 == Заповнена RACI матриця
 
-#table(
-  columns: (22%, 22%, 16%, 22%, 18%),
-  table.header(
-    [*Project activity*],
-    [*R*],
-    [*A*],
-    [*C*],
-    [*I*],
+#figure(
+  table(
+    columns: (22%, 22%, 16%, 22%, 18%),
+    table.header(
+      [*Project activity*],
+      [*R*],
+      [*A*],
+      [*C*],
+      [*I*],
+    ),
+    [*Project planning*],
+    [Project Manager, Business Analyst],
+    [Sponsor],
+    [Domain SME, Implementation SME, Operational Support],
+    [Customer, End User, Tester, Supplier, Regulator],
+
+    [*Elicitation*],
+    [Business Analyst],
+    [Business Analyst],
+    [Customer, Domain SME, End User, Sponsor],
+    [Project Manager, Implementation SME, Tester, Operational Support],
+
+    [*Requirement analysis*],
+    [Business Analyst, Domain SME],
+    [Business Analyst],
+    [End User, Implementation SME, Tester, Operational Support, Regulator],
+    [Project Manager, Sponsor, Customer, Supplier],
+
+    [*Testing*],
+    [Tester, Implementation SME],
+    [Project Manager],
+    [Business Analyst, Domain SME, End User, Operational Support],
+    [Sponsor, Customer, Supplier, Regulator],
   ),
-  [*Project planning*],
-  [Project Manager, Business Analyst],
-  [Sponsor],
-  [Domain SME, Implementation SME, Operational Support],
-  [Customer, End User, Tester, Supplier, Regulator],
-
-  [*Elicitation*],
-  [Business Analyst],
-  [Business Analyst],
-  [Customer, Domain SME, End User, Sponsor],
-  [Project Manager, Implementation SME, Tester, Operational Support],
-
-  [*Requirement analysis*],
-  [Business Analyst, Domain SME],
-  [Business Analyst],
-  [End User, Implementation SME, Tester, Operational Support, Regulator],
-  [Project Manager, Sponsor, Customer, Supplier],
-
-  [*Testing*],
-  [Tester, Implementation SME],
-  [Project Manager],
-  [Business Analyst, Domain SME, End User, Operational Support],
-  [Sponsor, Customer, Supplier, Regulator],
+  caption: [RACI матриця для проєктних активностей]
 )
 
 == Обґрунтування

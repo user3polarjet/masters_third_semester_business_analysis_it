@@ -61,6 +61,8 @@
 #set heading(numbering: (..nums) => nums.pos().map(str).join("."))
 #show heading: it => {
   if it.level == 1 {
+    counter(figure.where(kind: table)).update(0)
+    counter(figure.where(kind: image)).update(0)
     set align(center)
     set text(weight: "regular", size: 18pt)
     pagebreak()
@@ -70,6 +72,33 @@
     it
   }
 }
+
+#let figure-numbering(num) = context {
+  let h-num = counter(heading).at(here()).at(0)
+  str(h-num) + "." + str(num)
+}
+
+#show figure.where(kind: table): it => {
+  align(left)[
+    #it.supplement #context (it.counter.display(it.numbering)) #it.caption.body
+  ]
+  v(10pt, weak: true)
+  align(center)[#it.body]
+}
+#show figure.where(kind: image): it => {
+  set align(center)
+  it.body
+  v(8pt, weak: true)
+  it.supplement
+  [ ]
+  context (it.counter.display(it.numbering))
+  [ — ]
+  it.caption.body
+}
+
+#set figure(numbering: figure-numbering)
+#show figure.where(kind: image): set figure(supplement: [Рисунок])
+#show figure.where(kind: table): set figure(supplement: [Таблиця])
 
 #set table(stroke: 0.5pt, inset: 4pt)
 #set par(first-line-indent: (amount: 1.25cm, all: true), justify: true, leading: 1em, spacing: 1em)
@@ -100,7 +129,8 @@
 
 == Первинні ризики
 
-#text(size: 9pt)[
+#figure(
+  text(size: 9pt)[
   #set par(first-line-indent: 0pt, justify: false, leading: 0.8em, spacing: 0.45em)
   #table(
     columns: (5%, 28%, 37%, 10%, 10%, 10%),
@@ -155,11 +185,15 @@
     [60],
     [27],
   )
-]
+  ],
+  caption: [Первинні ризики проєкту],
+  kind: table,
+)
 
 == Модифікація та залишковий ризик
 
-#text(size: 9pt)[
+#figure(
+  text(size: 9pt)[
   #set par(first-line-indent: 0pt, justify: false, leading: 0.8em, spacing: 0.45em)
   #table(
     columns: (5%, 48%, 17%, 10%, 10%, 10%),
@@ -214,7 +248,10 @@
     [30],
     [6],
   )
-]
+  ],
+  caption: [План модифікації та залишковий ризик],
+  kind: table,
+)
 
 = Висновок
 

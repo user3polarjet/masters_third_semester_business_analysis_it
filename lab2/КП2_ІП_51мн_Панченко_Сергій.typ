@@ -63,6 +63,8 @@
 #set heading(numbering: (..nums) => nums.pos().map(str).join("."))
 #show heading: it => {
   if it.level == 1 {
+    counter(figure.where(kind: table)).update(0)
+    counter(figure.where(kind: image)).update(0)
     set align(center)
     set text(weight: "regular", size: 18pt)
     pagebreak()
@@ -73,7 +75,19 @@
   }
 }
 
-#show figure: it => {
+#let figure-numbering(num) = context {
+  let h-num = counter(heading).at(here()).at(0)
+  str(h-num) + "." + str(num)
+}
+
+#show figure.where(kind: table): it => {
+  align(left)[
+    #it.supplement #context (it.counter.display(it.numbering)) #it.caption.body
+  ]
+  v(10pt, weak: true)
+  align(center)[#it.body]
+}
+#show figure.where(kind: image): it => {
   set align(center)
   it.body
   v(8pt, weak: true)
@@ -83,15 +97,10 @@
   [ — ]
   it.caption.body
 }
-#set figure(
-  supplement: [Рисунок],
-  numbering: (num) => {
-    context {
-      let h-num = counter(heading).at(here()).at(0)
-      str(h-num) + "." + str(num)
-    }
-  }
-)
+
+#set figure(numbering: figure-numbering)
+#show figure.where(kind: image): set figure(supplement: [Рисунок])
+#show figure.where(kind: table): set figure(supplement: [Таблиця])
 
 #set par(first-line-indent: (amount: 1.25cm, all: true), justify: true, leading: 1em, spacing: 1em)
 #set list(indent: 1.25cm)
@@ -429,22 +438,26 @@
 
 == Реєстр зацікавлених сторін
 
-#text(size: 11pt)[
-  #table(
-    columns: (9%, 27%, 9%, 9%, 9%, 37%),
-    stroke: 0.5pt,
-    inset: 3.5pt,
-    table.header(
-      [*Код*],
-      [*Зацікавлена сторона*],
-      [*Inf.*],
-      [*Int.*],
-      [*Sup.*],
-      [*Обґрунтування*],
+#figure(
+  text(size: 11pt)[
+    #table(
+      columns: (9%, 27%, 9%, 9%, 9%, 37%),
+      stroke: 0.5pt,
+      inset: 3.5pt,
+      table.header(
+        [*Код*],
+        [*Зацікавлена сторона*],
+        [*Inf.*],
+        [*Int.*],
+        [*Sup.*],
+        [*Обґрунтування*],
+      ),
+      ..stakeholder-table-cells(stakeholders),
     ),
-    ..stakeholder-table-cells(stakeholders),
-  )
-]
+  ],
+  caption: [Реєстр зацікавлених сторін],
+  kind: table,
+)
 
 У таблиці використано скорочення: Inf. - Influence, Int. - Interest, Sup. - Support.
 
