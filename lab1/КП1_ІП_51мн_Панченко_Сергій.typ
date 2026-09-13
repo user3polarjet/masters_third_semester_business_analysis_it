@@ -78,6 +78,7 @@
   str(h-num) + "." + str(num)
 }
 
+#show figure.where(kind: table): set block(breakable: true)
 #show figure.where(kind: table): it => {
   align(left)[
     #it.supplement #context (it.counter.display(it.numbering)) #it.caption.body
