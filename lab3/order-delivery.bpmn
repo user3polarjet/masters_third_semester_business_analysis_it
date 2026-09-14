@@ -7,6 +7,7 @@
                   id="Definitions_OrderDelivery"
                   targetNamespace="http://example.com/lab3/order-delivery">
   <bpmn:message id="Message_DeliveryAccepted" name="Доставку прийнято" />
+  <bpmn:message id="Message_DeliveryArrived" name="Приїхала доставка" />
   <bpmn:dataStore id="DataStore_OrderRegistry" name="Сховище замовлень" />
 
   <bpmn:process id="Process_Manager" name="Робота менеджера" isExecutable="false">
@@ -39,12 +40,12 @@
     <bpmn:endEvent id="EndEvent_ManagerAccepted" name="Менеджера повідомлено">
       <bpmn:incoming>Flow_Manager_Accepted_End</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:intermediateCatchEvent id="IntermediateCatch_DeadlineExpired" name="Умова: строк доставки минув">
+    <bpmn:intermediateCatchEvent id="IntermediateCatch_DeadlineExpired" name="Строк доставки минув">
       <bpmn:incoming>Flow_Manager_Wait_Deadline</bpmn:incoming>
       <bpmn:outgoing>Flow_Manager_Deadline_Contact</bpmn:outgoing>
-      <bpmn:conditionalEventDefinition id="ConditionalDefinition_DeadlineExpired">
-        <bpmn:condition xsi:type="bpmn:tFormalExpression"><![CDATA[строк доставки минув і повідомлення від комірника не отримано]]></bpmn:condition>
-      </bpmn:conditionalEventDefinition>
+      <bpmn:timerEventDefinition id="TimerDefinition_DeadlineExpired">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression"><![CDATA[зазначений строк доставки]]></bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:userTask id="Task_ContactTransportCompany" name="Зв'язатися з транспортною компанією">
       <bpmn:incoming>Flow_Manager_Deadline_Contact</bpmn:incoming>
@@ -73,11 +74,9 @@
   </bpmn:process>
 
   <bpmn:process id="Process_WarehouseWorker" name="Робота комірника" isExecutable="false">
-    <bpmn:startEvent id="StartEvent_OrderDelivered" name="Умова: замовлення доставлено">
+    <bpmn:startEvent id="StartEvent_OrderDelivered" name="Приїхала доставка">
       <bpmn:outgoing>Flow_Warehouse_Start_GetOrder</bpmn:outgoing>
-      <bpmn:conditionalEventDefinition id="ConditionalDefinition_OrderDelivered">
-        <bpmn:condition xsi:type="bpmn:tFormalExpression"><![CDATA[замовлення доставлено на склад]]></bpmn:condition>
-      </bpmn:conditionalEventDefinition>
+      <bpmn:messageEventDefinition id="MessageStartDefinition_OrderDelivered" messageRef="Message_DeliveryArrived" />
     </bpmn:startEvent>
     <bpmn:userTask id="Task_GetOrderData" name="Отримати дані замовлення зі сховища">
       <bpmn:incoming>Flow_Warehouse_Start_GetOrder</bpmn:incoming>
@@ -174,7 +173,7 @@
 
       <bpmndi:BPMNShape id="StartEvent_OrderDelivered_di" bpmnElement="StartEvent_OrderDelivered">
         <dc:Bounds x="90" y="494" width="36" height="36" />
-        <bpmndi:BPMNLabel><dc:Bounds x="50" y="532" width="116" height="42" /></bpmndi:BPMNLabel>
+        <bpmndi:BPMNLabel><dc:Bounds x="52" y="532" width="112" height="42" /></bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Task_GetOrderData_di" bpmnElement="Task_GetOrderData"><dc:Bounds x="170" y="470" width="145" height="85" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Task_CheckGoods_di" bpmnElement="Task_CheckGoods"><dc:Bounds x="365" y="470" width="145" height="85" /></bpmndi:BPMNShape>
